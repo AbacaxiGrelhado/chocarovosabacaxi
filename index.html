@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ovos e Cuidadora</title>
+<style>
+body {
+    margin:0;
+    padding:0;
+    font-family: Arial, sans-serif;
+    background-color: #9898B8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Contador e cooldown */
+#contador-container {
+    color: #58586B;
+    font-size: 1.3em;
+    font-weight: bold;
+    background-color: rgba(255,255,255,0.6);
+    padding: 8px 18px;
+    border-radius: 10px;
+    border: 2px solid #58586B;
+    text-transform: uppercase;
+    user-select: none;
+    margin-top: 10px;
+}
+#cooldown {
+    font-size: 1em;
+    color: #404056;
+    margin-bottom: 20px;
+}
+
+/* Cuidadora fixa abaixo do timer */
+#cuidadora {
+    width: 200px;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+#cuidadora:hover { transform: scale(1.05); }
+
+/* Ovos */
+.container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    text-align: center;
+    margin-bottom: 10px; /* reduz distância */
+}
+.ovo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.ovo:hover { transform: scale(1.05); }
+.ovo img {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+}
+.titulo {
+    font-size: 0.9em;
+    font-weight: bold;
+    margin-bottom: -25px; /* mais próximo do ovo */
+    text-transform: uppercase;
+    color: #58586B;
+}
+
+/* Imagem decorativa fixa abaixo dos ovos */
+#decor {
+    width: 200px; /* ou outro valor menor */
+    height: auto; /* mantém a proporção */
+    margin-top: -10px;
+    margin-bottom: 10px;
+}
+
+/* Imagem central do ovo */
+#imagem-central {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: none;
+    z-index: 10;
+    background-color: rgba(0,0,0,0.6);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    animation: fadeIn 0.3s ease;
+}
+#imagem-transicao {
+    width: 250px;
+    height: auto;
+    border: 4px solid white;
+    border-radius: 10px;
+    background-color: white;
+    display: block;
+    margin: 0 auto 15px auto;
+    transition: filter 1.5s ease, opacity 0.4s ease;
+}
+#botao-entendido {
+    background-color: #58586B;
+    color: white;
+    font-size: 1em;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: none;
+}
+#botao-entendido:hover { background-color: #404056; }
+
+/* Tela diálogo cuidadora simplificada */
+#dialogo-tela {
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background-color: rgba(0,0,0,0.5);
+    display:none;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+}
+
+#dialogo-container {
+    background-color: rgba(0,0,0,0.8);
+    width: 80%;
+    max-width: 700px;
+    display: flex;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+#cuidadora-grande {
+    width: 35%;
+    object-fit: cover;
+}
+
+#conteudo-dialogo {
+    width: 65%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    justify-content: center;
+    position: relative;
+}
+
+#mensagem-cuidadora {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+    min-height: 60px;
+    white-space: pre-wrap;
+}
+
+/* Botão sair como X dentro de bolinha no canto superior direito */
+#botao-sair {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 35px;
+    height: 35px;
+    background-color: #A34ACE;
+    color: white;
+    font-size: 1.5em;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    line-height: 30px;
+    text-align: center;
+}
+#botao-sair:hover { background-color: #8729B0; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -48%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+@keyframes fadeOut {
+    from { opacity: 1; transform: translate(-50%, -50%); }
+    to { opacity: 0; transform: translate(-50%, -52%); }
+}
+
+@media(max-width:700px){
+    .container { flex-direction: column; gap: 20px; }
+    #dialogo-container { flex-direction: column; width: 95%; }
+    #cuidadora-grande { width: 100%; height: auto; }
+    #conteudo-dialogo { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- Contador e cooldown -->
+<div id="contador-container">
+    Ovos chocados: <span id="contador">0</span>
+</div>
+<div id="cooldown"></div>
+
+<!-- Cuidadora fixa abaixo do timer -->
+<img id="cuidadora" src="imgovos/cuidadora.png" alt="Cuidadora" onclick="abrirDialogo()">
+
+<!-- Ovos -->
+<div class="container" id="area-ovos">
+    <div class="ovo" onclick="chocarOvo('comum', 'imgovos/ovo1.png')">
+        <div class="titulo">Comum</div>
+        <img src="imgovos/ovo1.png" alt="Ovo Comum">
+    </div>
+    <div class="ovo" onclick="chocarOvo('incomum', 'imgovos/ovo2.png')">
+        <div class="titulo">Incomum</div>
+        <img src="imgovos/ovo2.png" alt="Ovo Incomum">
+    </div>
+    <div class="ovo" onclick="chocarOvo('raro', 'imgovos/ovo3.png')">
+        <div class="titulo">Raro</div>
+        <img src="imgovos/ovo3.png" alt="Ovo Raro">
+    </div>
+</div>
+
+<!-- Imagem decorativa fixa logo abaixo dos ovos -->
+<img id="decor" src="imgovos/decor.png" alt="Decoração">
+
+<!-- Tela central do ovo chocando -->
+<div id="imagem-central">
+    <img id="imagem-transicao" src="" alt="Ovo">
+    <button id="botao-entendido" onclick="fecharImagem()">Entendido</button>
+</div>
+
+<!-- Tela diálogo cuidadora simplificada -->
+<div id="dialogo-tela">
+    <div id="dialogo-container">
+        <img id="cuidadora-grande" src="imgovos/cuidadora.png" alt="Cuidadora">
+        <div id="conteudo-dialogo">
+            <div id="mensagem-cuidadora"></div>
+            <button id="botao-sair" onclick="fecharDialogo()">×</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ======================= Sistema de ovos =======================
+let podeClicar = true;
+let contador = 0;
+const cooldownTempo = 20*60*1000;
+const cooldownDisplay = document.getElementById("cooldown");
+
+if(localStorage.getItem("ovosChocados")){
+    contador = parseInt(localStorage.getItem("ovosChocados"));
+    document.getElementById("contador").textContent = contador;
+}
+
+function atualizarCooldown(){
+    const ultimoClique = localStorage.getItem("ultimoOvo");
+    if(!ultimoClique){
+        cooldownDisplay.textContent = "";
+        podeClicar = true;
+        return;
+    }
+    const agora = Date.now();
+    const diff = (parseInt(ultimoClique)+cooldownTempo) - agora;
+    if(diff <=0){
+        cooldownDisplay.textContent = "";
+        podeClicar = true;
+    } else {
+        podeClicar = false;
+        const minutos = Math.floor(diff/60000);
+        const segundos = Math.floor((diff%60000)/1000);
+        cooldownDisplay.textContent = `Próximo ovo em: ${minutos}m ${segundos}s`;
+    }
+}
+setInterval(atualizarCooldown,1000);
+atualizarCooldown();
+
+function chocarOvo(tipo, ovoSrc){
+    if(!podeClicar) return;
+    podeClicar=false;
+    localStorage.setItem("ultimoOvo",Date.now());
+
+    const quantidadeDeImagens = 47;
+    const numeroSorteado = Math.floor(Math.random()*quantidadeDeImagens)+1;
+    const caminhoPokemon = `img/${tipo}${numeroSorteado}.png`;
+
+    const imagemCentral = document.getElementById("imagem-central");
+    const imagemTransicao = document.getElementById("imagem-transicao");
+    const botao = document.getElementById("botao-entendido");
+
+    imagemTransicao.src = ovoSrc;
+    imagemTransicao.style.filter = "brightness(1) grayscale(0%)";
+    imagemTransicao.style.opacity = "1";
+    imagemCentral.style.display = "block";
+    botao.style.display="none";
+
+    setTimeout(()=>{
+        imagemTransicao.style.transition = "filter 1.5s ease";
+        imagemTransicao.style.filter = "brightness(2) grayscale(100%)";
+    },300);
+
+    setTimeout(()=>{
+        imagemTransicao.style.opacity = "0";
+        setTimeout(()=>{
+            imagemTransicao.src = caminhoPokemon;
+            imagemTransicao.style.filter="brightness(1) grayscale(0%)";
+            imagemTransicao.style.opacity="1";
+            botao.style.display="inline-block";
+
+            contador++;
+            localStorage.setItem("ovosChocados",contador);
+            document.getElementById("contador").textContent=contador;
+        },400);
+    },1800);
+}
+
+function fecharImagem(){
+    const imagemCentral = document.getElementById("imagem-central");
+    imagemCentral.style.animation="fadeOut 0.3s ease";
+    setTimeout(()=>{
+        imagemCentral.style.display="none";
+        imagemCentral.style.animation="fadeIn 0.3s ease";
+        atualizarCooldown();
+    },300);
+}
+
+// ======================= Sistema de diálogo simplificado =======================
+const frasesCuidadora = [
+    "Eu escondi rare candy em alguns ovos, talvez você tenha uma surpresa ao abrir um!",
+    "Hmmm, acho que Lucarios conseguem gerar apenas ovos raros, então se está atrás de um Riolu, compre um ovo raro!",
+    "Nós somos patrocinados pelo Velhote do duelo de Kleavor-Scyther-Scizor!",
+    "Alguns ovos estão brilhando em um verde estranho... Me pergunto, o que é isso?...",
+    "Alguns pokémon podem aparecer nos 3 tipos de ovos!",
+    "Os pokémon do santuário geralmente são nossa maior fonte de ovos!",
+    "*Ela não diz nada, mas parece te encarar com uma expressão meio envergonhada! Eventualmente você percebe que ela sujou a touca com um pouco de comida.*",
+    "*Ela conta uma piada engraçada sobre ovos.*",
+    "*Ela te ensina a cantarolar uma música sobre pokémon*",
+    "Meu nome? Me chamo Olívia! Não se esqueça hein!",
+    "Tenho um parente na Dream Island! Se o ver, fale sobre mim!",
+    "*Ela parece concentrada jogando algo no celular.*"
+];
+
+let i = 0;
+let velocidade = 25;
+let mensagemAtual = "";
+
+function abrirDialogo(){
+    const dialogoTela = document.getElementById("dialogo-tela");
+    dialogoTela.style.display = "flex";
+
+    const frase = frasesCuidadora[Math.floor(Math.random()*frasesCuidadora.length)];
+    mensagemAtual = frase;
+    i = 0;
+    document.getElementById("mensagem-cuidadora").textContent = "";
+    escreverMensagem();
+}
+
+function fecharDialogo(){
+    document.getElementById("dialogo-tela").style.display = "none";
+}
+
+function escreverMensagem(){
+    const display = document.getElementById("mensagem-cuidadora");
+    if(i < mensagemAtual.length){
+        display.textContent += mensagemAtual.charAt(i);
+        i++;
+        setTimeout(escreverMensagem, velocidade);
+    }
+}
+</script>
+</body>
+</html>
